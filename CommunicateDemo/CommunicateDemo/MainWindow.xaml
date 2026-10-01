@@ -1,0 +1,487 @@
+﻿<Window
+    x:Class="CommunicateDemo.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:CommunicateDemo.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:CommunicateDemo"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="TCP/UDP 通信调试助手"
+    Width="960"
+    Height="720"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <conv:BoolToColorConverter x:Key="BoolToColorConverter" />
+    </Window.Resources>
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TabControl
+            x:Name="MainTab"
+            Grid.Row="0"
+            SelectedIndex="0">
+            <TabItem Header="🖥  Server（服务端）">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <!--  协议 + 地址配置  -->
+                    <StackPanel
+                        Grid.Row="0"
+                        Margin="0,0,0,6"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="协议:" />
+                        <RadioButton
+                            x:Name="ServerTcpRadio"
+                            Margin="0,0,16,0"
+                            Content="TCP"
+                            IsChecked="True" />
+                        <RadioButton
+                            x:Name="ServerUdpRadio"
+                            Margin="0,0,16,0"
+                            Content="UDP" />
+
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="监听 IP:" />
+                        <ComboBox
+                            x:Name="ServerIpCombo"
+                            Width="160"
+                            Margin="0,0,12,0"
+                            VerticalContentAlignment="Center"
+                            IsEditable="True" />
+
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="端口:" />
+                        <TextBox
+                            x:Name="ServerPortBox"
+                            Width="70"
+                            Margin="0,0,16,0"
+                            VerticalContentAlignment="Center"
+                            Text="8080" />
+
+                        <Button
+                            x:Name="ServerStartBtn"
+                            Width="80"
+                            Margin="0,0,8,0"
+                            Click="ServerStartBtn_Click"
+                            Content="Start" />
+                        <Button
+                            x:Name="ServerStopBtn"
+                            Width="80"
+                            Click="ServerStopBtn_Click"
+                            Content="Stop"
+                            IsEnabled="False" />
+                    </StackPanel>
+
+                    <!--  接收格式 + 编码  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Margin="0,0,0,6"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="显示:" />
+                        <ComboBox
+                            x:Name="ServerRxFmtCombo"
+                            Width="80"
+                            SelectionChanged="ServerFmt_Changed">
+                            <ComboBoxItem Content="Ascii" Tag="Ascii" />
+                            <ComboBoxItem Content="Hex" Tag="Hex" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="16,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="编码:" />
+                        <ComboBox
+                            x:Name="ServerRxEncCombo"
+                            Width="80"
+                            SelectionChanged="ServerFmt_Changed">
+                            <ComboBoxItem
+                                Content="UTF-8"
+                                IsSelected="True"
+                                Tag="Utf8" />
+                            <ComboBoxItem Content="GBK" Tag="Gbk" />
+                            <ComboBoxItem Content="ASCII" Tag="Ascii" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="16,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="发送:" />
+                        <ComboBox x:Name="ServerTxFmtCombo" Width="80">
+                            <ComboBoxItem
+                                Content="Ascii"
+                                IsSelected="True"
+                                Tag="Ascii" />
+                            <ComboBoxItem Content="Hex" Tag="Hex" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="4,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="编码:" />
+                        <ComboBox x:Name="ServerTxEncCombo" Width="80">
+                            <ComboBoxItem
+                                Content="UTF-8"
+                                IsSelected="True"
+                                Tag="Utf8" />
+                            <ComboBoxItem Content="GBK" Tag="Gbk" />
+                            <ComboBoxItem Content="ASCII" Tag="Ascii" />
+                        </ComboBox>
+                    </StackPanel>
+                    <!--  消息列表 + 日志  -->
+                    <Grid Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ListBox
+                            x:Name="ServerMsgList"
+                            Grid.Row="0"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Foreground="{Binding IsSelf, Converter={StaticResource BoolToColorConverter}}" Text="{Binding Display}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBox
+                            x:Name="ServerLogBox"
+                            Grid.Row="1"
+                            Height="70"
+                            Margin="0,6,0,0"
+                            Background="#FFF5F5F5"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            IsReadOnly="True"
+                            TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto" />
+                    </Grid>
+                    <!--  发送区 + 导出  -->
+                    <Grid Grid.Row="3" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="60" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!--  UDP 定向目标（仅 UDP 模式可见）  -->
+                        <TextBlock
+                            x:Name="ServerTargetLabel"
+                            Grid.Column="0"
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="目标 IP:"
+                            Visibility="Collapsed" />
+                        <ComboBox
+                            x:Name="ServerTargetIpCombo"
+                            Grid.Column="1"
+                            VerticalContentAlignment="Center"
+                            IsEditable="True"
+                            SelectionChanged="ServerTargetIpCombo_SelectionChanged"
+                            Visibility="Collapsed" />
+                        <TextBlock
+                            x:Name="ServerTargetPortLabel"
+                            Grid.Column="2"
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="端口:"
+                            Visibility="Collapsed" />
+                        <TextBox
+                            x:Name="ServerTargetPortBox"
+                            Grid.Column="3"
+                            Width="50"
+                            VerticalContentAlignment="Center"
+                            Text="8080"
+                            Visibility="Collapsed" />
+                        <Button
+                            x:Name="ServerUdpBroadcastBtn"
+                            Grid.Column="4"
+                            Width="56"
+                            Margin="6,0,0,0"
+                            Click="ServerUdpBroadcastBtn_Click"
+                            Content="广播"
+                            Visibility="Collapsed" />
+
+                        <TextBox
+                            x:Name="ServerSendBox"
+                            Grid.Column="5"
+                            Margin="4,0,0,0"
+                            VerticalContentAlignment="Center"
+                            KeyDown="ServerSendBox_KeyDown"
+                            TextWrapping="NoWrap" />
+                        <Button
+                            x:Name="ServerSendBtn"
+                            Grid.Column="6"
+                            Width="80"
+                            Margin="8,0,4,0"
+                            Click="ServerSendBtn_Click"
+                            Content="Send" />
+                        <Button
+                            x:Name="ServerClearBtn"
+                            Grid.Column="7"
+                            Width="70"
+                            Margin="0,0,4,0"
+                            Click="ServerClearBtn_Click"
+                            Content="Clear" />
+                        <Button
+                            x:Name="ServerExportMsgBtn"
+                            Grid.Column="8"
+                            Width="80"
+                            Margin="0,0,4,0"
+                            Click="ServerExportMsg_Click"
+                            Content="导出消息" />
+                        <Button
+                            x:Name="ServerExportLogBtn"
+                            Grid.Column="9"
+                            Width="80"
+                            Click="ServerExportLog_Click"
+                            Content="导出日志" />
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="💻 Client（客户端）">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!--  协议 + 地址配置  -->
+                    <StackPanel
+                        Grid.Row="0"
+                        Margin="0,0,0,6"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="协议:" />
+                        <RadioButton
+                            x:Name="ClientTcpRadio"
+                            Margin="0,0,16,0"
+                            Checked="ClientTcpRadio_Checked"
+                            Content="TCP"
+                            IsChecked="True" />
+                        <RadioButton
+                            x:Name="ClientUdpRadio"
+                            Margin="0,0,16,0"
+                            Checked="ClientUdpRadio_Checked"
+                            Content="UDP" />
+
+                        <TextBlock
+                            x:Name="ClientLocalPortLabel"
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="本地端口:"
+                            Visibility="Collapsed" />
+                        <TextBox
+                            x:Name="ClientLocalPortBox"
+                            Width="60"
+                            Margin="0,0,12,0"
+                            VerticalContentAlignment="Center"
+                            Text="0"
+                            Visibility="Collapsed" />
+
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="远端 IP:" />
+                        <ComboBox
+                            x:Name="ClientIpCombo"
+                            Width="160"
+                            Margin="0,0,12,0"
+                            VerticalContentAlignment="Center"
+                            IsEditable="True" />
+
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="端口:" />
+                        <TextBox
+                            x:Name="ClientPortBox"
+                            Width="70"
+                            Margin="0,0,16,0"
+                            VerticalContentAlignment="Center"
+                            Text="8080" />
+
+                        <Button
+                            x:Name="ClientConnectBtn"
+                            Width="80"
+                            Margin="0,0,8,0"
+                            Click="ClientConnectBtn_Click"
+                            Content="Connect" />
+                        <Button
+                            x:Name="ClientDisconnectBtn"
+                            Width="100"
+                            Click="ClientDisconnectBtn_Click"
+                            Content="Disconnect"
+                            IsEnabled="False" />
+                        <CheckBox
+                            x:Name="ClientAutoReconnectCheck"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Center"
+                            Content="自动重连"
+                            IsChecked="True" />
+                    </StackPanel>
+
+                    <!--  接收格式 + 编码  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Margin="0,0,0,6"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="显示:" />
+                        <ComboBox
+                            x:Name="ClientRxFmtCombo"
+                            Width="80"
+                            SelectionChanged="ClientFmt_Changed">
+                            <ComboBoxItem Content="Ascii" Tag="Ascii" />
+                            <ComboBoxItem Content="Hex" Tag="Hex" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="16,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="编码:" />
+                        <ComboBox
+                            x:Name="ClientRxEncCombo"
+                            Width="80"
+                            SelectionChanged="ClientFmt_Changed">
+                            <ComboBoxItem
+                                Content="UTF-8"
+                                IsSelected="True"
+                                Tag="Utf8" />
+                            <ComboBoxItem Content="GBK" Tag="Gbk" />
+                            <ComboBoxItem Content="ASCII" Tag="Ascii" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="16,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="发送:" />
+                        <ComboBox x:Name="ClientTxFmtCombo" Width="80">
+                            <ComboBoxItem
+                                Content="Ascii"
+                                IsSelected="True"
+                                Tag="Ascii" />
+                            <ComboBoxItem Content="Hex" Tag="Hex" />
+                        </ComboBox>
+                        <TextBlock
+                            Margin="4,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="编码:" />
+                        <ComboBox x:Name="ClientTxEncCombo" Width="80">
+                            <ComboBoxItem
+                                Content="UTF-8"
+                                IsSelected="True"
+                                Tag="Utf8" />
+                            <ComboBoxItem Content="GBK" Tag="Gbk" />
+                            <ComboBoxItem Content="ASCII" Tag="Ascii" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!--  消息列表 + 日志  -->
+                    <Grid Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ListBox
+                            x:Name="ClientMsgList"
+                            Grid.Row="0"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Foreground="{Binding IsSelf, Converter={StaticResource BoolToColorConverter}}" Text="{Binding Display}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <TextBox
+                            x:Name="ClientLogBox"
+                            Grid.Row="1"
+                            Height="70"
+                            Margin="0,6,0,0"
+                            Background="#FFF5F5F5"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            IsReadOnly="True"
+                            TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto" />
+                    </Grid>
+
+                    <!--  发送区 + 导出  -->
+                    <Grid Grid.Row="3" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox
+                            x:Name="ClientSendBox"
+                            Grid.Column="0"
+                            VerticalContentAlignment="Center"
+                            KeyDown="ClientSendBox_KeyDown"
+                            TextWrapping="NoWrap" />
+                        <Button
+                            x:Name="ClientSendBtn"
+                            Grid.Column="1"
+                            Width="80"
+                            Margin="8,0,4,0"
+                            Click="ClientSendBtn_Click"
+                            Content="Send" />
+                        <Button
+                            x:Name="ClientClearBtn"
+                            Grid.Column="2"
+                            Width="70"
+                            Margin="0,0,4,0"
+                            Click="ClientClearBtn_Click"
+                            Content="Clear" />
+                        <StackPanel Grid.Column="3" Orientation="Horizontal">
+                            <Button
+                                Width="80"
+                                Margin="0,0,4,0"
+                                Click="ClientExportMsg_Click"
+                                Content="导出消息" />
+                            <Button
+                                Width="80"
+                                Click="ClientExportLog_Click"
+                                Content="导出日志" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <StatusBar Grid.Row="1" Margin="0,6,0,0">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="就绪 | 自动日志已启用: Logs\\log-YYYYMMdd.txt" />
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
